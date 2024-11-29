@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nerve Solutions Strategy Selector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .view-toggle {
+            display: flex;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .view-toggle button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .view-toggle button.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .view-toggle button:hover {
+            background-color: #e0e0e0;
+        }
+        #dateDropdown {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .strategy-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .empty-state {
+            background-color: #f0f0f0;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="view-toggle" id="viewToggle">
+        <button data-view="Bullish" class="active">Bullish</button>
+        <button data-view="Bearish">Bearish</button>
+        <button data-view="RangeBound">RangeBound</button>
+        <button data-view="Volatile">Volatile</button>
+    </div>
+
+    <select id="dateDropdown"></select>
+
+    <div id="strategiesContainer"></div>
+
+    <script>
+        // Resources from the assignment
+        const dateArray = ['24-Apr-2024','02-May-2024','09-May-2024','31-May-2024','21-Jun-2024'];
+        const strategyArray = [
+            {
+                'View': 'Bullish',
+                'Value': {
+                    '24-Apr-2024': ['Bull Call Spread','Bull Put Spread','Bull Put Spread','Long Call','Bull Put Spread','Bull Call Spread','Strategy1','Bull Call Spread','Strategy1','Strategy1','SpreadStrategy','Bull Call Spread'],
+                    '02-May-2024': ['Bull Call Spread','Bull Call Spread','Bull Put Spread','Long Call','Long Call','Long Call','Bull Put Spread','Bull Call Spread','Strategy1','Bull Call Spread','Strategy2','Strategy1','Strategy2','Bull Call Spread'],
+                    '09-May-2024': ['Strategy Put','Strategy Call','Strategy Call','Strategy Call','Strategy Put'],
+                }
+            },
+            {
+                'View': 'Bearish',
+                'Value': {
+                    '24-Apr-2024': ['Bear Call Spread','Bear Call Spread','Bear Call Spread','Long Put','Long Put','Long Put','Bear Call Spread'],
+                    '31-May-2024': ['Long Put','Long Put','Long Put','Long Put','Long Put'],
+                    '21-Jun-2024': ['Strategy3','Strategy3','Bear Put Spread','Strategy3','Long Put','Long Put'],
+                }
+            },
+            {
+                'View': 'RangeBound',
+                'Value': {
+                    '24-Apr-2024': ['Short Straddle','Short Strangle','Short Strangle','Iron Butterfly','Short Strangle','Short Straddle','Strategy1','Short Straddle','Strategy1','Strategy1','SpreadStrategy','Short Straddle'],
+                    '02-May-2024': ['Short Straddle','Short Straddle','Short Strangle','Iron Butterfly','Iron Butterfly','Iron Butterfly','Short Strangle','Short Straddle','Strategy1','Short Straddle','Strategy2','Strategy1','Strategy2','Short Straddle'],
+                    '21-Jun-2024': ['Iron Condor','Iron Butterfly','Iron Butterfly','Iron Butterfly','Iron Condor'],
+                }
+            },
+            {
+                'View': 'Volatile',
+                'Value': {
+                    '02-May-2024': ['Long Straddle','Long Strangle','Long Strangle','Long Strangle','Long Straddle','Strategy1','Long Straddle','Strategy1','Strategy1','Spread-Strategy','Long Straddle'],
+                    '09-May-2024': ['Long Straddle','Long Straddle','Long Strangle','Long Strangle','Long Straddle','Strategy1','Long Straddle','Strategy2','Strategy1','Strategy2','Long Straddle'],
+                    '31-May-2024': ['Long Straddle','Long Strangle','Long Strangle','Long Strangle','Long Straddle'],
+                }
+            }
+        ];
+
+        // DOM Elements
+        const viewToggle = document.getElementById('viewToggle');
+        const dateDropdown = document.getElementById('dateDropdown');
+        const strategiesContainer = document.getElementById('strategiesContainer');
+
+        // State
+        let selectedView = 'Bullish';
+        let selectedDate = dateArray[0];
+
+        // Populate Date Dropdown
+        function populateDateDropdown() {
+            dateDropdown.innerHTML = dateArray.map(date => 
+                `<option value="${date}">${date}</option>`
+            ).join('');
+            dateDropdown.value = selectedDate;
+        }
+
+        // Get Strategies for Current View and Date
+        function getCurrentStrategies() {
+            const currentViewData = strategyArray.find(item => item.View === selectedView);
+            return currentViewData.Value[selectedDate] || [];
+        }
+
+        // Count Strategy Occurrences
+        function getStrategyCount(strategies) {
+            const countMap = {};
+            strategies.forEach(strategy => {
+                countMap[strategy] = (countMap[strategy] || 0) + 1;
+            });
+            return countMap;
+        }
+
+        // Render Strategies
+        function renderStrategies() {
+            const currentStrategies = getCurrentStrategies();
+            const strategyCounts = getStrategyCount(currentStrategies);
+
+            if (currentStrategies.length === 0) {
+                strategiesContainer.innerHTML = `
+                    <div class="empty-state">
+                        <p>No strategies found for ${selectedDate}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            strategiesContainer.innerHTML = Object.entries(strategyCounts)
+                .map(([strategy, count]) => `
+                    <div class="strategy-card">
+                        <span>${strategy}</span>
+                        <span>${count} ${count === 1 ? 'Strategy' : 'Strategies'}</span>
+                    </div>
+                `).join('');
+        }
+
+        // Event Listeners
+        viewToggle.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                // Remove active class from all buttons
+                viewToggle.querySelectorAll('button').forEach(btn => 
+                    btn.classList.remove('active')
+                );
+                
+                // Add active class to clicked button
+                e.target.classList.add('active');
+                
+                // Update selected view
+                selectedView = e.target.dataset.view;
+                renderStrategies();
+            }
+        });
+
+        dateDropdown.addEventListener('change', (e) => {
+            selectedDate = e.target.value;
+            renderStrategies();
+        });
+
+        // Initial Setup
+        populateDateDropdown();
+        renderStrategies();
+    </script>
+</body>
+</html>
